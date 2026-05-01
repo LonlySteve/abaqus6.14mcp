@@ -1,0 +1,80 @@
+{
+    "schemaVersion":  1,
+    "project":  {
+                    "name":  "Codex Cantilever Beam - Uniform Load",
+                    "prompt":  "Static analysis of a steel cantilever beam fixed at the left end and loaded by uniform pressure on the top face.",
+                    "solver":  "Abaqus/CAE 6.14-4",
+                    "model":  "3D linear static solid mechanics",
+                    "source":  "C:\\abaqus-mcp\\jobs\\cantilever_udl\\codex_cantilever_udl_static.inp"
+                },
+    "connection":  {
+                       "status":  "connected",
+                       "message":  "Abaqus MCP solved the model and exported ODB results for browser viewing."
+                   },
+    "inputs":  {
+                   "geometry":  {
+                                    "length_mm":  100,
+                                    "width_mm":  10,
+                                    "height_mm":  10
+                                },
+                   "material":  {
+                                    "name":  "Steel",
+                                    "youngs_modulus_mpa":  210000,
+                                    "poissons_ratio":  0.3
+                                },
+                   "loads":  {
+                                 "fixed_end":  "x = 0 face",
+                                 "uniform_pressure_mpa":  1,
+                                 "loaded_face":  "top face",
+                                 "load_direction":  "normal pressure on top face"
+                             },
+                   "mesh":  {
+                                "element_family":  "C3D8R",
+                                "seed_size_mm":  5,
+                                "elements":  80,
+                                "nodes":  189
+                            }
+               },
+    "outputs":  {
+                    "status":  "complete",
+                    "job_name":  "codex_cantilever_udl_static",
+                    "odb":  "C:\\abaqus-mcp\\jobs\\cantilever_udl\\codex_cantilever_udl_static.odb",
+                    "metrics":  [
+                                    {
+                                        "label":  "Max von Mises stress",
+                                        "value":  179.4725,
+                                        "unit":  "MPa",
+                                        "state":  "complete"
+                                    },
+                                    {
+                                        "label":  "Max displacement magnitude",
+                                        "value":  0.953473,
+                                        "unit":  "mm",
+                                        "state":  "complete"
+                                    },
+                                    {
+                                        "label":  "Uniform pressure",
+                                        "value":  1,
+                                        "unit":  "MPa",
+                                        "state":  "complete"
+                                    }
+                                ]
+                },
+    "workflow":  [
+                     {
+                         "step":  "Build Abaqus model",
+                         "status":  "complete",
+                         "detail":  "Created a 3D solid cantilever beam with fixed left face, steel material, static step, and top-face uniform pressure."
+                     },
+                     {
+                         "step":  "Solve",
+                         "status":  "complete",
+                         "detail":  "Abaqus/Standard completed the linear static job successfully."
+                     },
+                     {
+                         "step":  "Export viewer data",
+                         "status":  "complete",
+                         "detail":  "Extracted nodal displacement and element von Mises stress from the ODB into result_mesh.json."
+                     }
+                 ]
+}

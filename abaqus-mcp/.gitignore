@@ -1,0 +1,24 @@
+# Runtime files
+status.json
+status.json.tmp
+stop.flag
+mcp.log
+thread_error.log
+
+# Command and result files
+commands/*.json
+results/*.json
+scripts/*.py
+screenshots/*
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Backup files
+*.bak

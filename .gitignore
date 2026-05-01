@@ -1,0 +1,38 @@
+# Runtime outputs
+commands/
+results/
+jobs/
+screenshots/
+scripts/tmp/
+temp/
+userprofile/
+*.odb
+*.sim
+*.sta
+*.msg
+*.dat
+*.com
+*.prt
+*.ipm
+*.log
+*.pyc
+__pycache__/
+status.json
+status.json.tmp
+stop.flag
+mcp.log
+
+# Node / viewer
+node_modules/
+dist/
+dist-verify/
+viewer-dev.out.log
+viewer-dev.err.log
+viewer-dev.pid
+
+# Local editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

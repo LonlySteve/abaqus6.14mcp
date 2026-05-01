@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "abaqus-mcp-server": {
+      "command": "python",
+      "args": [
+        "-c",
+        "import os, runpy; os.environ['ABAQUS_MCP_HOME'] = r'C:\\abaqus-mcp'; runpy.run_path(r'C:\\abaqus-mcp\\mcp_server.py', run_name='__main__')"
+      ]
+    }
+  }
+}
