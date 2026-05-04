@@ -46,14 +46,80 @@ Return the top five local matches:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 `
-  -Query "cantilever static pressure C3D8R" -Limit 5
+  -Query "cantilever static pressure C3D8R" -Limit 5 -Method bm25
 ```
 
 JSON output for agents:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 `
-  -Query "surface based tie constraint" -Limit 5 -Json
+  -Query "surface based tie constraint" -Limit 5 -Method hybrid -Json
+```
+
+Search methods:
+
+- `bm25`: default lexical retrieval. Good first choice for Help titles,
+  keywords, and example names.
+- `tfidf`: simpler term-frequency scoring. Useful as a baseline.
+- `hybrid`: combines BM25 and TF-IDF. Good for mixed English/Chinese prompts
+  such as "多芯片柔性板弯曲 应力".
+
+## Optional Local Embeddings
+
+Embedding search is optional and stays local. It requires
+`sentence-transformers`, `numpy`, and a locally cached model such as
+`BAAI/bge-small-en-v1.5` or an e5-small variant.
+
+Build vectors from the JSONL index:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-abaqus-help-embeddings.ps1 `
+  -Model "BAAI/bge-small-en-v1.5"
+```
+
+Search vectors:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help-embeddings.ps1 `
+  -Query "multi chip flexible board bending stress" -Limit 5
+```
+
+The embedding script uses local files by default. It will fail clearly if the
+Python packages or model cache are missing. If you explicitly want
+sentence-transformers to download model files, add `-AllowDownload`; the Help
+entries are still encoded locally by the script.
+
+## MCP Tools
+
+The `abaqus-docs-mcp` folder exposes the local index as MCP tools:
+
+- `search_abaqus_help(query, limit, method)`
+- `get_abaqus_doc_entry(path_or_id)`
+- `suggest_abaqus_pattern(description, limit)`
+
+On Windows, prefer an ASCII launch path for MCP servers. This avoids failures
+when the repository is under a user directory containing non-ASCII characters.
+Create a local junction and print a Codex config snippet:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-docs-mcp-link.ps1 `
+  -LinkPath C:\abaqus-614-mcp-suite
+```
+
+Example Codex MCP config:
+
+```json
+{
+  "mcpServers": {
+    "abaqus-docs": {
+      "command": "python",
+      "args": ["C:/abaqus-614-mcp-suite/abaqus-docs-mcp/mcp_server.py"],
+      "env": {
+        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl"
+      }
+    }
+  }
+}
 ```
 
 ## Recommended Codex Workflow
@@ -72,8 +138,7 @@ Example prompt fragment:
 
 ```text
 Before writing the Abaqus script, run:
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 -Query "<topic>" -Limit 5
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 -Query "<topic>" -Limit 5 -Method hybrid
 Use the returned local examples as references, but do not copy commercial Help
 text into repo files.
 ```
-

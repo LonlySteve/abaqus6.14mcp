@@ -1,11 +1,8 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$Query,
     [string]$IndexDir = "",
-    [int]$Limit = 5,
-    [ValidateSet("bm25", "tfidf", "hybrid")]
-    [string]$Method = "bm25",
-    [switch]$Json
+    [string]$Model = "BAAI/bge-small-en-v1.5",
+    [int]$BatchSize = 32,
+    [switch]$AllowDownload
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,24 +13,26 @@ if (-not $IndexDir) {
 }
 
 $IndexPath = Join-Path $IndexDir "index.jsonl"
+$OutPath = Join-Path $IndexDir "embeddings.jsonl"
+$EmbedTool = Join-Path $RepoRoot "tools\abaqus_docs_embed.py"
+
 if (-not (Test-Path -LiteralPath $IndexPath)) {
     throw "Index not found: $IndexPath. Run scripts\index-abaqus-help.ps1 first."
 }
 
-$SearchTool = Join-Path $RepoRoot "tools\abaqus_docs_search.py"
-if (-not (Test-Path -LiteralPath $SearchTool)) {
-    throw "Search backend not found: $SearchTool"
-}
-
 $argsList = @(
-    $SearchTool,
-    $Query,
+    $EmbedTool,
+    "build",
     "--index", $IndexPath,
-    "--limit", [string]$Limit,
-    "--method", $Method
+    "--output", $OutPath,
+    "--model", $Model,
+    "--batch-size", [string]$BatchSize
 )
-if ($Json) {
-    $argsList += "--json"
+
+if ($AllowDownload) {
+    $argsList += "--allow-download"
+} else {
+    $argsList += "--local-files-only"
 }
 
 python @argsList

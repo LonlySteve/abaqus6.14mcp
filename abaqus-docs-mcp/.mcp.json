@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "abaqus-docs": {
+      "command": "python",
+      "args": [
+        "C:/abaqus-614-mcp-suite/abaqus-docs-mcp/mcp_server.py"
+      ],
+      "env": {
+        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl"
+      }
+    }
+  }
+}

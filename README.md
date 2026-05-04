@@ -17,10 +17,12 @@ compatibility:
 
 ```text
 abaqus-mcp/      Abaqus MCP server and CAE plugin, patched for Abaqus 6.14
+abaqus-docs-mcp/ Local MCP server for Abaqus Help retrieval
 text-to-cae/     Optional browser viewer and Abaqus examples
 scripts/         Windows install, smoke-test, and viewer startup scripts
 docs/            Notes for Abaqus 6.14 and collaboration
 examples/        Small validation examples
+tools/           Local document retrieval helpers
 ```
 
 ## Quick Install
@@ -100,16 +102,35 @@ should be regenerated from ODBs when needed.
 
 ## Local Abaqus Help Search
 
-This repository includes a minimal local Abaqus Help/example indexer. It does
-not commit Abaqus commercial documentation content to GitHub; each user builds
-their own local index:
+This repository includes a local Abaqus Help/example indexer and retrieval
+tools. It does not commit Abaqus commercial documentation content to GitHub;
+each user builds their own local index:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\index-abaqus-help.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 -Query "cantilever static C3D8R" -Limit 5
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 -Query "cantilever static C3D8R" -Limit 5 -Method bm25
 ```
 
-See `docs/HOW_TO_INDEX_ABAQUS_HELP.md`.
+The search wrapper supports local BM25, TF-IDF, and hybrid scoring:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 `
+  -Query "multi chip flexible board bending stress" -Limit 5 -Method hybrid
+```
+
+Optional local-only embedding scripts are included, but they require the user
+to install/cache a sentence-transformers model locally first. No Abaqus Help
+content needs to be uploaded to a cloud service.
+
+For Codex MCP use on Windows, create an ASCII launch path and use the printed
+config:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-docs-mcp-link.ps1
+```
+
+See `docs/HOW_TO_INDEX_ABAQUS_HELP.md` and
+`docs/ABAQUS_DOCS_RAG_ROADMAP.md`.
 
 ## License And Attribution
 
