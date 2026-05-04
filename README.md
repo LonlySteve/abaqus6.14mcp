@@ -98,6 +98,19 @@ Only a small default viewer result is kept in git. Large generated
 `result_mesh.json` files for other examples are intentionally excluded and
 should be regenerated from ODBs when needed.
 
+## Local Abaqus Help Search
+
+This repository includes a minimal local Abaqus Help/example indexer. It does
+not commit Abaqus commercial documentation content to GitHub; each user builds
+their own local index:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\index-abaqus-help.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help.ps1 -Query "cantilever static C3D8R" -Limit 5
+```
+
+See `docs/HOW_TO_INDEX_ABAQUS_HELP.md`.
+
 ## License And Attribution
 
 This suite includes code derived from:

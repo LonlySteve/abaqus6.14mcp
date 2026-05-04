@@ -1,4 +1,6 @@
 # Runtime outputs
+.local/
+local-index/
 commands/
 results/
 jobs/
@@ -35,4 +37,3 @@ viewer-dev.pid
 Thumbs.db
 .idea/
 .vscode/
-
