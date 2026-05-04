@@ -21,10 +21,13 @@ TOOLS_DIR = REPO_ROOT / "tools"
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+from abaqus_docs_embed import DEFAULT_EMBEDDINGS, search_embeddings  # noqa: E402
 from abaqus_docs_search import DEFAULT_INDEX, load_records, search  # noqa: E402
 
 
 INDEX_PATH = Path(os.environ.get("ABAQUS_HELP_INDEX", str(DEFAULT_INDEX)))
+EMBEDDINGS_PATH = Path(os.environ.get("ABAQUS_HELP_EMBEDDINGS", str(DEFAULT_EMBEDDINGS)))
+EMBED_MODEL = os.environ.get("ABAQUS_HELP_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 mcp = FastMCP("abaqus-docs-mcp")
 
 
@@ -38,7 +41,22 @@ def _load_records():
 
 @mcp.tool()
 def search_abaqus_help(query: str, limit: int = 5, method: str = "bm25") -> str:
-    """Search local Abaqus Help/examples with BM25, TF-IDF, or hybrid scoring."""
+    """Search local Abaqus Help/examples with BM25, TF-IDF, hybrid, or embedding scoring."""
+    if method in ("embedding", "semantic"):
+        limit = max(1, min(int(limit), 20))
+        try:
+            return _json(search_embeddings(
+                EMBEDDINGS_PATH,
+                query,
+                model_name=EMBED_MODEL,
+                limit=limit,
+                local_files_only=True,
+            ))
+        except Exception as exc:
+            return _json({
+                "error": str(exc),
+                "hint": "Run scripts/setup-abaqus-help-embeddings.ps1 and build embeddings, then start MCP with that venv Python.",
+            })
     if method not in ("bm25", "tfidf", "hybrid"):
         method = "bm25"
     limit = max(1, min(int(limit), 20))
@@ -77,7 +95,7 @@ def get_abaqus_doc_entry(path_or_id: str) -> str:
 
 
 @mcp.tool()
-def suggest_abaqus_pattern(description: str, limit: int = 5) -> str:
+def suggest_abaqus_pattern(description: str, limit: int = 5, method: str = "hybrid") -> str:
     """Suggest Abaqus modeling patterns from local docs/examples for a simulation description."""
     description_lower = str(description).lower()
     hints = []
@@ -94,9 +112,28 @@ def suggest_abaqus_pattern(description: str, limit: int = 5) -> str:
     if not hints:
         hints.append("Start with a small linear static smoke test, then increase geometric/material fidelity.")
 
-    results = search(INDEX_PATH, description, limit=max(1, min(int(limit), 10)), method="hybrid")
+    limited = max(1, min(int(limit), 10))
+    reference_query = " ".join([description] + hints)
+    if method in ("embedding", "semantic"):
+        try:
+            results = search_embeddings(
+                EMBEDDINGS_PATH,
+                reference_query,
+                model_name=EMBED_MODEL,
+                limit=limited,
+                local_files_only=True,
+            )
+        except Exception as exc:
+            results = [{
+                "error": str(exc),
+                "hint": "Embedding search unavailable; falling back to hybrid lexical search.",
+            }]
+            results.extend(search(INDEX_PATH, reference_query, limit=limited, method="hybrid"))
+    else:
+        results = search(INDEX_PATH, reference_query, limit=limited, method="hybrid")
     return _json({
         "description": description,
+        "method": method,
         "patternHints": hints,
         "localReferences": results,
     })
@@ -114,9 +151,11 @@ def status() -> str:
         "indexPath": str(INDEX_PATH),
         "exists": exists,
         "entries": count,
+        "embeddingsPath": str(EMBEDDINGS_PATH),
+        "embeddingsExists": EMBEDDINGS_PATH.exists(),
+        "embeddingModel": EMBED_MODEL,
     })
 
 
 if __name__ == "__main__":
     mcp.run()
-

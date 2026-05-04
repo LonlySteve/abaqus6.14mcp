@@ -1,12 +1,14 @@
 {
   "mcpServers": {
     "abaqus-docs": {
-      "command": "python",
+      "command": "C:/abaqus-614-mcp-suite/.local/venvs/abaqus-docs-rag/Scripts/python.exe",
       "args": [
         "C:/abaqus-614-mcp-suite/abaqus-docs-mcp/mcp_server.py"
       ],
       "env": {
-        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl"
+        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl",
+        "ABAQUS_HELP_EMBEDDINGS": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/embeddings.jsonl",
+        "ABAQUS_HELP_EMBED_MODEL": "BAAI/bge-small-en-v1.5"
       }
     }
   }

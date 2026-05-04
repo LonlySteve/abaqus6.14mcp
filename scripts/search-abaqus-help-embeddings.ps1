@@ -4,6 +4,7 @@ param(
     [string]$IndexDir = "",
     [string]$Model = "BAAI/bge-small-en-v1.5",
     [int]$Limit = 5,
+    [string]$PythonCommand = "python",
     [switch]$Json,
     [switch]$AllowDownload
 )
@@ -39,4 +40,4 @@ if ($AllowDownload) {
     $argsList += "--local-files-only"
 }
 
-python @argsList
+& $PythonCommand @argsList

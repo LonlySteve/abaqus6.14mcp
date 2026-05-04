@@ -18,9 +18,13 @@ from typing import List, Sequence
 
 DEFAULT_INDEX = Path(__file__).resolve().parents[1] / ".local" / "abaqus-help-index" / "index.jsonl"
 DEFAULT_EMBEDDINGS = Path(__file__).resolve().parents[1] / ".local" / "abaqus-help-index" / "embeddings.jsonl"
+_MODEL_CACHE = {}
 
 
 def load_sentence_transformer(model_name: str, local_files_only: bool):
+    cache_key = (model_name, local_files_only)
+    if cache_key in _MODEL_CACHE:
+        return _MODEL_CACHE[cache_key]
     try:
         from sentence_transformers import SentenceTransformer
     except Exception as exc:
@@ -33,14 +37,16 @@ def load_sentence_transformer(model_name: str, local_files_only: bool):
     if local_files_only:
         kwargs["local_files_only"] = True
     try:
-        return SentenceTransformer(model_name, **kwargs)
+        model = SentenceTransformer(model_name, **kwargs)
     except TypeError:
         if local_files_only:
             raise RuntimeError(
                 "Installed sentence-transformers does not support local_files_only. "
                 "Use a local model path to avoid network access."
             )
-        return SentenceTransformer(model_name)
+        model = SentenceTransformer(model_name)
+    _MODEL_CACHE[cache_key] = model
+    return model
 
 
 def load_records(index_path: Path) -> List[dict]:
@@ -117,11 +123,39 @@ def cmd_build(args: argparse.Namespace) -> int:
 
 
 def cmd_search(args: argparse.Namespace) -> int:
-    embeddings_path = Path(args.embeddings)
+    results = search_embeddings(
+        Path(args.embeddings),
+        args.query,
+        model_name=args.model,
+        limit=args.limit,
+        local_files_only=args.local_files_only,
+    )
+    if args.json:
+        print(json.dumps(results, indent=2, ensure_ascii=False))
+    else:
+        for idx, item in enumerate(results, 1):
+            print(f"[{idx}] score={item['score']} method=embedding kind={item.get('kind')}")
+            print(f"Title: {item.get('title')}")
+            print(f"Path:  {item.get('path')}")
+            keywords = item.get("keywords") or []
+            if keywords:
+                print("Keys:  " + ", ".join(str(value) for value in keywords[:10]))
+            print(f"Text:  {item.get('excerpt')}")
+            print("")
+    return 0
+
+
+def search_embeddings(
+    embeddings_path: Path,
+    query: str,
+    model_name: str = "BAAI/bge-small-en-v1.5",
+    limit: int = 5,
+    local_files_only: bool = True,
+) -> List[dict]:
     if not embeddings_path.exists():
         raise FileNotFoundError(f"Embeddings not found: {embeddings_path}. Run build first.")
-    model = load_sentence_transformer(args.model, args.local_files_only)
-    query_vector = [float(value) for value in model.encode(args.query, normalize_embeddings=True)]
+    model = load_sentence_transformer(model_name, local_files_only)
+    query_vector = [float(value) for value in model.encode(query, normalize_embeddings=True)]
 
     scored = []
     with embeddings_path.open("r", encoding="utf-8") as handle:
@@ -134,8 +168,9 @@ def cmd_search(args: argparse.Namespace) -> int:
             if score > 0:
                 scored.append((score, record))
     scored.sort(key=lambda item: item[0], reverse=True)
+
     results = []
-    for score, record in scored[: args.limit]:
+    for score, record in scored[: max(1, limit)]:
         sample = str(record.get("textSample") or "")
         if len(sample) > 420:
             sample = sample[:420] + "..."
@@ -150,19 +185,7 @@ def cmd_search(args: argparse.Namespace) -> int:
             "keywords": record.get("keywords") or [],
             "excerpt": sample,
         })
-    if args.json:
-        print(json.dumps(results, indent=2, ensure_ascii=False))
-    else:
-        for idx, item in enumerate(results, 1):
-            print(f"[{idx}] score={item['score']} method=embedding kind={item.get('kind')}")
-            print(f"Title: {item.get('title')}")
-            print(f"Path:  {item.get('path')}")
-            keywords = item.get("keywords") or []
-            if keywords:
-                print("Keys:  " + ", ".join(str(value) for value in keywords[:10]))
-            print(f"Text:  {item.get('excerpt')}")
-            print("")
-    return 0
+    return results
 
 
 def main(argv: Sequence[str] | None = None) -> int:

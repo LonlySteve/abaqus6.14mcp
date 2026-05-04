@@ -73,14 +73,15 @@ Embedding search is optional and stays local. It requires
 Build vectors from the JSONL index:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-abaqus-help-embeddings.ps1 `
-  -Model "BAAI/bge-small-en-v1.5"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-help-embeddings.ps1 `
+  -BuildIndex -AllowDownload
 ```
 
 Search vectors:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help-embeddings.ps1 `
+  -PythonCommand ".\.local\venvs\abaqus-docs-rag\Scripts\python.exe" `
   -Query "multi chip flexible board bending stress" -Limit 5
 ```
 
@@ -89,13 +90,20 @@ Python packages or model cache are missing. If you explicitly want
 sentence-transformers to download model files, add `-AllowDownload`; the Help
 entries are still encoded locally by the script.
 
+After embeddings are built, MCP can also use semantic retrieval:
+
+```text
+search_abaqus_help(query="multi chip flexible board bending stress", method="embedding", limit=5)
+suggest_abaqus_pattern(description="multi chip flexible board bending stress", method="embedding")
+```
+
 ## MCP Tools
 
 The `abaqus-docs-mcp` folder exposes the local index as MCP tools:
 
 - `search_abaqus_help(query, limit, method)`
 - `get_abaqus_doc_entry(path_or_id)`
-- `suggest_abaqus_pattern(description, limit)`
+- `suggest_abaqus_pattern(description, limit, method)`
 
 On Windows, prefer an ASCII launch path for MCP servers. This avoids failures
 when the repository is under a user directory containing non-ASCII characters.
@@ -103,7 +111,8 @@ Create a local junction and print a Codex config snippet:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-docs-mcp-link.ps1 `
-  -LinkPath C:\abaqus-614-mcp-suite
+  -LinkPath C:\abaqus-614-mcp-suite `
+  -PythonCommand C:/abaqus-614-mcp-suite/.local/venvs/abaqus-docs-rag/Scripts/python.exe
 ```
 
 Example Codex MCP config:
@@ -112,10 +121,12 @@ Example Codex MCP config:
 {
   "mcpServers": {
     "abaqus-docs": {
-      "command": "python",
+      "command": "C:/abaqus-614-mcp-suite/.local/venvs/abaqus-docs-rag/Scripts/python.exe",
       "args": ["C:/abaqus-614-mcp-suite/abaqus-docs-mcp/mcp_server.py"],
       "env": {
-        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl"
+        "ABAQUS_HELP_INDEX": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/index.jsonl",
+        "ABAQUS_HELP_EMBEDDINGS": "C:/abaqus-614-mcp-suite/.local/abaqus-help-index/embeddings.jsonl",
+        "ABAQUS_HELP_EMBED_MODEL": "BAAI/bge-small-en-v1.5"
       }
     }
   }

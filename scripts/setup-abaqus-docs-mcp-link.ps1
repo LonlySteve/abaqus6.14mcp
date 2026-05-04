@@ -20,6 +20,7 @@ if (Test-Path $LinkPath) {
 
 $serverPath = (Join-Path $LinkPath 'abaqus-docs-mcp\mcp_server.py').Replace('\', '/')
 $indexPath = (Join-Path $LinkPath '.local\abaqus-help-index\index.jsonl').Replace('\', '/')
+$embeddingsPath = (Join-Path $LinkPath '.local\abaqus-help-index\embeddings.jsonl').Replace('\', '/')
 
 Write-Host ""
 Write-Host "Codex MCP config:"
@@ -31,6 +32,8 @@ $config = [ordered]@{
             args = @($serverPath)
             env = [ordered]@{
                 ABAQUS_HELP_INDEX = $indexPath
+                ABAQUS_HELP_EMBEDDINGS = $embeddingsPath
+                ABAQUS_HELP_EMBED_MODEL = 'BAAI/bge-small-en-v1.5'
             }
         }
     }

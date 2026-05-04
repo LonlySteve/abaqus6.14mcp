@@ -2,6 +2,7 @@ param(
     [string]$IndexDir = "",
     [string]$Model = "BAAI/bge-small-en-v1.5",
     [int]$BatchSize = 32,
+    [string]$PythonCommand = "python",
     [switch]$AllowDownload
 )
 
@@ -35,4 +36,4 @@ if ($AllowDownload) {
     $argsList += "--local-files-only"
 }
 
-python @argsList
+& $PythonCommand @argsList

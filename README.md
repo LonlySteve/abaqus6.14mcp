@@ -122,11 +122,26 @@ Optional local-only embedding scripts are included, but they require the user
 to install/cache a sentence-transformers model locally first. No Abaqus Help
 content needs to be uploaded to a cloud service.
 
+To set up the local embedding environment and build vectors:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-help-embeddings.ps1 -BuildIndex -AllowDownload
+```
+
+After that, semantic search is available from PowerShell and MCP:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\search-abaqus-help-embeddings.ps1 `
+  -PythonCommand ".\.local\venvs\abaqus-docs-rag\Scripts\python.exe" `
+  -Query "multi chip flexible board bending stress" -Limit 5
+```
+
 For Codex MCP use on Windows, create an ASCII launch path and use the printed
 config:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-docs-mcp-link.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-abaqus-docs-mcp-link.ps1 `
+  -PythonCommand C:/abaqus-614-mcp-suite/.local/venvs/abaqus-docs-rag/Scripts/python.exe
 ```
 
 See `docs/HOW_TO_INDEX_ABAQUS_HELP.md` and
